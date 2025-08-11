@@ -1,48 +1,34 @@
 from beanie import PydanticObjectId
 from fastapi import APIRouter, HTTPException, status, Response
 
-from app.schemas import ChannelCreate, ChannelRead, ChannelUpdate
-from core.database.models.channel import Channel
+from src.app.schemas import ChannelCreate, ChannelUpdate
+from src.core.database.models.channel import Channel
 
 router = APIRouter(prefix="/channels", tags=["channels"])
 
 
-@router.post("/", response_model=ChannelRead, status_code=status.HTTP_201_CREATED)
-async def create_channel(data: ChannelCreate) -> ChannelRead:
+@router.post("/", status_code=status.HTTP_201_CREATED)
+async def create_channel(data: ChannelCreate) -> Channel:
     ch = Channel(**data.model_dump())
     await ch.insert()
-    return ChannelRead(
-        id=str(ch.id),
-        bot_id=str(ch.bot_id),
-        channel_url=str(ch.channel_url),
-        channel_token=ch.channel_token,
-    )
+    return ch
 
 
-@router.get("/", response_model=list[ChannelRead])
-async def list_channels() -> list[ChannelRead]:
-    all_ch = await Channel.find_all().to_list()
-    return [
-        ChannelRead(id=str(c.id), bot_id=str(c.bot_id), channel_url=str(c.channel_url), channel_token=c.channel_token)
-        for c in all_ch
-    ]
+@router.get("/")
+async def list_channels() -> list[Channel]:
+    return await Channel.find_all().to_list()
 
 
-@router.get("/{chan_id}", response_model=ChannelRead)
-async def get_channel(chan_id: str) -> ChannelRead:
+@router.get("/{chan_id}")
+async def get_channel(chan_id: str) -> Channel:
     c = await Channel.get(PydanticObjectId(chan_id))
     if not c:
         raise HTTPException(status_code=404, detail="Channel not found")
-    return ChannelRead(
-        id=str(c.id),
-        bot_id=str(c.bot_id),
-        channel_url=str(c.channel_url),
-        channel_token=c.channel_token,
-    )
+    return c
 
 
-@router.patch("/{chan_id}", response_model=ChannelRead)
-async def update_channel(chan_id: str, data: ChannelUpdate) -> ChannelRead:
+@router.patch("/{chan_id}")
+async def update_channel(chan_id: str, data: ChannelUpdate) -> Channel:
     c = await Channel.get(PydanticObjectId(chan_id))
     if not c:
         raise HTTPException(status_code=404, detail="Channel not found")
@@ -50,12 +36,7 @@ async def update_channel(chan_id: str, data: ChannelUpdate) -> ChannelRead:
     for k, v in update.items():
         setattr(c, k, v)
     await c.save()
-    return ChannelRead(
-        id=str(c.id),
-        bot_id=str(c.bot_id),
-        channel_url=str(c.channel_url),
-        channel_token=c.channel_token,
-    )
+    return c
 
 
 @router.delete(

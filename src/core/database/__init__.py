@@ -1,3 +1,3 @@
-from core.database.registry import initialize_database
+"""Database package."""
 
-__all__ = ["initialize_database"]
+__all__: list[str] = []

@@ -5,8 +5,9 @@ from pydantic import BaseModel, HttpUrl, Field, field_validator, ConfigDict
 
 # Database Model
 class Channel(Document):
-    bot_id: PydanticObjectId = Field(..., description="ID чат-бота в базе данных")
-    channel_url: HttpUrl = Field(..., description="URL для отправки сообщений в канал")
+    """Модель канала для подключения к внешним платформам."""
+    bot_id: str = Field(..., description="ID бота, к которому подключен канал")
+    channel_url: str = Field(..., description="URL канала для отправки сообщений")
     channel_token: str = Field(..., description="Токен авторизации канала")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

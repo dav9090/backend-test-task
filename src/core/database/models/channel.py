@@ -1,0 +1,54 @@
+from datetime import datetime, UTC
+from beanie import Document, PydanticObjectId
+from pydantic import BaseModel, HttpUrl, Field, field_validator, ConfigDict
+
+
+# Database Model
+class Channel(Document):
+    """Модель канала для подключения к внешним платформам."""
+    bot_id: str = Field(..., description="ID бота, к которому подключен канал")
+    channel_url: str = Field(..., description="URL канала для отправки сообщений")
+    channel_token: str = Field(..., description="Токен авторизации канала")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    class Settings:
+        name = "channels"
+        indexes = [("bot_id",)]
+
+    def __init__(self, **data: dict) -> None:  # обновлять updated_at при изменении
+        super().__init__(**data)
+        self.updated_at = datetime.now(UTC)
+
+
+# Pydantic Schemas
+class ChannelBase(BaseModel):
+    channel_url: HttpUrl = Field(..., title="URL канала")
+    channel_token: str = Field(..., min_length=8, title="Токен канала")
+
+
+class ChannelCreate(ChannelBase):
+    bot_id: PydanticObjectId = Field(..., title="ID чат-бота")
+
+
+class ChannelRead(ChannelBase):
+    id: PydanticObjectId = Field(..., alias="_id")
+    bot_id: PydanticObjectId
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(
+        validate_by_name=True,
+        from_attributes=True,
+    )
+
+
+class ChannelUpdate(BaseModel):
+    channel_url: HttpUrl | None = Field(None, title="Новый URL канала")
+    channel_token: str | None = Field(None, min_length=8, title="Новый токен канала")
+
+    @field_validator("channel_token")
+    def token_not_empty(cls, v: str) -> str:
+        if v is not None and not v.strip():
+            raise ValueError("Токен не может быть пустым")
+        return v

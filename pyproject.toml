@@ -8,6 +8,7 @@ requires-python = ">=3.13"
 dependencies = [
     "beanie>=1.29.0",
     "fastapi>=0.115.12",
+    "httpx>=0.28.1",
     "loguru>=0.7.3",
     "pydantic>=2.10.6",
     "pydantic-settings>=2.8.1",
@@ -42,3 +43,18 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+
+[tool.flake8]
+select = ["RQN"]          # включаем код проверок плагина
+ignore = ["F401", "F403"]
+
+[tool.ruff]
+ignore = [
+    "S106",
+    "I001",
+    "S106",
+    "I001",
+    "FAST001",
+    "E402",
+    "RUF100",
+]
